@@ -11,7 +11,9 @@ A Telegram bot using Cloudflare workers and Upstash to give users either native 
 
 ## Setup
 
-Here are
+Steps to get up and running:
+
+### Step 1 - Install Dependencies
 
 ```bash
 # FROM: ./telegram-evm-faucet-bot
@@ -25,6 +27,14 @@ pnpm install;
 # Done in 1.9s
 ```
 
-## Deployment
+### Step 2 - Login To Cloudflare With Wrangler
+
+### Step 3 - Configure Environment Variables
+
+```bash
+pnpm dlx wrangler secret put UPSTASH_QSTASH_TOKEN
+```
+
+### Step 4 - Deploy
 
 ## Local Developmenmt

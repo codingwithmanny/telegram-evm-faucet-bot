@@ -5,10 +5,10 @@ import worker from '../src/index';
 
 // Types
 // =================================
-declare module "cloudflare:test" {
-  interface ProvidedEnv {
+declare module 'cloudflare:test' {
+	interface ProvidedEnv {
 		// Todo
-  }
+	}
 }
 
 // For now, you'll need to do something like this to get a correctly-typed
@@ -25,7 +25,6 @@ describe('Queue worker', () => {
 	// 	await waitOnExecutionContext(ctx);
 	// 	expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);
 	// });
-
 	// it('responds with Hello World! (integration style)', async () => {
 	// 	const response = await SELF.fetch('https://example.com');
 	// 	expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);

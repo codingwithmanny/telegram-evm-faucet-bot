@@ -8,7 +8,8 @@
     "start": "wrangler dev",
     "test": "vitest",
     "cf-typegen": "wrangler types",
-    "lt": "./node_modules/.bin/lt --port 8788"
+    "lt": "./node_modules/.bin/lt --port 8788",
+    "clean": "rm -rf node_modules"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.4.5",

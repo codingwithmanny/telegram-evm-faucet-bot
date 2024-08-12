@@ -454,10 +454,9 @@ export default {
 									address: params[0],
 									amount: params[1],
 									token,
-								})
+								}),
 							});
 						}
-
 
 						// if (isERC20Transfer) {
 						// 	// Validation

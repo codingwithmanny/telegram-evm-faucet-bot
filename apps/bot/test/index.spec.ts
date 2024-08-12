@@ -5,15 +5,15 @@ import worker from '../src/index';
 
 // Types
 // =================================
-declare module "cloudflare:test" {
-  interface ProvidedEnv {
+declare module 'cloudflare:test' {
+	interface ProvidedEnv {
 		TELEGRAM_API_TOKEN: string;
 		UPSTASH_REDIS_REST_URL: string;
 		UPSTASH_REDIS_REST_TOKEN: string;
 		CLOUDFLARE_WORKER_QUEUE_URL: string;
 		UPSTASH_QSTASH_TOKEN: string;
 		QSTASH_QUEUE: string;
-  }
+	}
 }
 
 // For now, you'll need to do something like this to get a correctly-typed
@@ -56,7 +56,7 @@ const MESSAGES = {
 
 describe('Bot worker', () => {
 	/**
-	 * 
+	 *
 	 */
 	it.skip('default reponse with `OK` 200', async () => {
 		const request = new IncomingRequest('http://example.com');
@@ -64,14 +64,13 @@ describe('Bot worker', () => {
 		const ctx = createExecutionContext();
 		const response = await worker.fetch(request, env, ctx);
 
-
 		// Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
 		await waitOnExecutionContext(ctx);
 		expect(await response.text()).toMatchInlineSnapshot(`"${MESSAGES.DEFAULT.SUCCESS.text}"`);
 	});
 
 	/**
-	 * 
+	 *
 	 */
 	it('command /start', async () => {
 		const request = new IncomingRequest('http://example.com', {

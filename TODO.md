@@ -1,6 +1,7 @@
 # TODOS
 
 Bot
+
 - [x] Set super admin
 - [x] RPC
   - [x] Set RPC
@@ -25,6 +26,7 @@ Bot
   - [x] Add to queue
 
 Queue
+
 - [x] Send
   - [x] Send confirmation message
 - [x] Failure

@@ -1,1 +1,1 @@
-pnpm dlx wrangler secret put UPSTASH_QSTASH_TOKEN
+
