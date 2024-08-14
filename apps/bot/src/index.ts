@@ -151,7 +151,7 @@ export default {
 				const rpc: { [key: string]: any } | null | undefined = await redis.get('rpc');
 				const isAdmin = message.from.username === superAdmin || Boolean(admin);
 				const hasSuperAdminAndRpc = Boolean(superAdmin) && !!rpc;
-				const [command, ...params] = message.text.trim().split(' ');
+				const [command, ...params] = message.text.trim().split(' ').filter((i: any) => i);
 
 				let chain = undefined;
 				if (rpc && typeof rpc === 'object' && Object.keys(rpc).length === 7) {
@@ -431,11 +431,11 @@ export default {
 					case '/send':
 						const isValidAddress = VALIDATION?.address.test(params[0]);
 						const isValidInteger = VALIDATION?.number.test(params[1]);
-						const isValidToken = VALIDATION?.token.test(params[2]);
-						const token = isValidToken ? params[2].toLowerCase() : hasSuperAdminAndRpc && rpc.token.toLowerCase();
+						const isValidToken = VALIDATION?.token.test(params[2].toLowerCase());
+						const token = isValidToken ? params[2].toLowerCase() : undefined;
 						const fetchURL = `https://qstash.upstash.io/v2/enqueue/${env.QSTASH_QUEUE}/${env.CLOUDFLARE_WORKER_QUEUE_URL}`;
 
-						if (hasSuperAdminAndRpc && isAdmin && params.length >= 2 && isValidAddress && isValidInteger) {
+						if (hasSuperAdminAndRpc && isAdmin && params.length >= 2 && isValidAddress && isValidInteger && token) {
 							if (rpc.token.toLowerCase() !== token) {
 								const existingTokens: { [key: string]: any } = (await redis.get('tokens')) || {};
 								const tokenAddress = existingTokens?.[token];
@@ -461,6 +461,13 @@ export default {
 								endpoint: '/sendMessage?parse_mode=markdown',
 								chatId,
 								text: `Sending...\n\`\`\`\n${params[1]} ${token.toUpperCase()} to ${params[0]}\n\`\`\``,
+								apiToken: env.TELEGRAM_API_TOKEN,
+							});
+						} else if (!isValidAddress || !isValidInteger || !isValidToken || !token) {
+							await telegramSendMessage({
+								endpoint: '/sendMessage?parse_mode=markdown',
+								chatId,
+								text: `Invalid send command.\n\`\`\`bash\n\# Example:\n/send 0x1234567890abcdef 100 $abcd\n\`\`\``,
 								apiToken: env.TELEGRAM_API_TOKEN,
 							});
 						}
