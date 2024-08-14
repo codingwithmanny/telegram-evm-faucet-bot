@@ -300,7 +300,7 @@ export default {
 						// Validation
 						const isValidUsername = params[1] && VALIDATION?.username.test(params[1]);
 						if (params[0] === 'add' && hasSuperAdminAndRpc && isValidUsername) {
-							await redis.set(`admin/${params[1]}`, 'true');
+							await redis.set(`admin/${params[1].replace('@', '')}`, 'true');
 							await telegramSendMessage({
 								endpoint: '/sendMessage?parse_mode=markdown',
 								chatId,
@@ -308,7 +308,7 @@ export default {
 								apiToken: env.TELEGRAM_API_TOKEN,
 							});
 						} else if (params[0] === 'remove' && hasSuperAdminAndRpc && isValidUsername) {
-							await redis.del(`admin/${params[1]}`);
+							await redis.del(`admin/${params[1].replace('@', '')}`);
 							await telegramSendMessage({
 								endpoint: '/sendMessage?parse_mode=markdown',
 								chatId,
@@ -316,7 +316,7 @@ export default {
 								apiToken: env.TELEGRAM_API_TOKEN,
 							});
 						} else if (params[0] === 'check' && superAdmin && isValidUsername) {
-							const admin = await redis.get(`admin/${params[1]}`);
+							const admin = await redis.get(`admin/${params[1].replace('@', '')}`);
 							await telegramSendMessage({
 								endpoint: '/sendMessage?parse_mode=markdown',
 								chatId,
@@ -366,7 +366,7 @@ export default {
 								await telegramSendMessage({
 									endpoint: '/sendMessage?parse_mode=markdown',
 									chatId,
-									text: `Faucet status:\n\`\`\`\nFauce Address:\n${account.address}\n\nBalance:\n${formatUnits(balance, parseInt(rpc.decimals, 0))} ${rpc.token}\n\`\`\``,
+									text: `Faucet status:\n\`\`\`\nFaucet Address:\n${account.address}\n\nBalance:\n${formatUnits(balance, parseInt(rpc.decimals, 0))} ${rpc.token}\n\`\`\``,
 									apiToken: env.TELEGRAM_API_TOKEN,
 								});
 							} catch (error) {
@@ -456,92 +456,24 @@ export default {
 									token,
 								}),
 							});
+
+							await telegramSendMessage({
+								endpoint: '/sendMessage?parse_mode=markdown',
+								chatId,
+								text: `Sending...\n\`\`\`\n${params[1]} ${token.toUpperCase()} to ${params[0]}\n\`\`\``,
+								apiToken: env.TELEGRAM_API_TOKEN,
+							});
 						}
-
-						// if (isERC20Transfer) {
-						// 	// Validation
-						// 	const isValidToken = VALIDATION?.token.test(params[2]);
-						// 	const existingTokens: { [key: string]: any } = (await redis.get('tokens')) || {};
-						// 	const tokenAddress = existingTokens?.[params[2].toLowerCase()];
-						// 	if (!tokenAddress || !isValidToken) break;
-
-						// 	console.log({ fetchURL });
-						// 	const result = await fetch(fetchURL, {
-						// 		method: 'POST',
-						// 		headers: {
-						// 			'Content-Type': 'application/json',
-						// 			'Upstash-Retries': '0',
-						// 			Authorization: `Bearer ${env.UPSTASH_QSTASH_TOKEN}`,
-						// 		},
-						// 		body: JSON.stringify({
-						// 			chatId,
-						// 			address: params[0],
-						// 			amount: params[1],
-						// 			token: params[2],
-						// 		}),
-						// 	});
-						// } else if (isGasTokenTransfer) {
-						// }
-						// // @TODO send to queue
-						// const isValidAddress = VALIDATION?.address.test(params[0]);
-						// const isValidInteger = VALIDATION?.number.test(params[1]);
-						// if (hasSuperAdminAndRpc && isAdmin && params.length === 3 && isValidAddress && isValidInteger) {
-						// 	// Validation
-						// 	const isValidToken = VALIDATION?.token.test(params[2]);
-						// 	const existingTokens: { [key: string]: any } = (await redis.get('tokens')) || {};
-						// 	const tokenAddress = existingTokens?.[params[2].toLowerCase()];
-						// 	if (!tokenAddress || !isValidToken) break;
-
-						// 	try {
-						// 		const publicClient = createPublicClient({ chain, transport: http() });
-						// 		const walletClient = createWalletClient({
-						// 			chain,
-						// 			transport: http(),
-						// 		});
-
-						// 		const txHash = await walletClient.writeContract({
-						// 			account: privateKeyToAccount(rpc.privateKey as `0x${string}`),
-						// 			address: `${tokenAddress}` as `0x${string}`,
-						// 			abi: erc20Abi,
-						// 			functionName: 'transfer',
-						// 			args: [`${params[0]}` as `0x${string}`, BigInt(parseInt(params[1], 0) * 1000000000000000000)],
-						// 		});
-						// 		await publicClient.waitForTransactionReceipt({ hash: txHash });
-						// 		await telegramSendMessage({
-						// 			endpoint: '/sendMessage?parse_mode=markdown',
-						// 			chatId,
-						// 			text: `Sent \`${params[1]}\` \`${params[2].toUpperCase()}\` to \`${params[0]}\`.\n\nTransaction hash:\n\`\`\`\n${rpc.blockExplorerUrl}/tx/${txHash}\n\`\`\``,
-						// 			apiToken: env.TELEGRAM_API_TOKEN,
-						// 		});
-						// 	} catch (error) {
-						// 		console.error(error);
-						// 		// Likely RPC error
-						// 	}
-						// } else if (hasSuperAdminAndRpc && isAdmin && params.length === 2 && isValidAddress && isValidInteger) {
-						// 	try {
-						// 		const publicClient = createPublicClient({ chain, transport: http() });
-						// 		const walletClient = createWalletClient({
-						// 			chain,
-						// 			transport: http(),
-						// 		});
-						// 		const txHash = await walletClient.sendTransaction({
-						// 			account: privateKeyToAccount(rpc.privateKey as `0x${string}`),
-						// 			to: `${params[0]}` as `0x${string}`,
-						// 			value: BigInt(parseInt(params[1], 0) * 1000000000000000000),
-						// 		});
-						// 		await publicClient.waitForTransactionReceipt({ hash: txHash });
-						// 		await telegramSendMessage({
-						// 			endpoint: '/sendMessage?parse_mode=markdown',
-						// 			chatId,
-						// 			text: `Sent \`${params[1]}\` \`${rpc.token}\` to \`${params[0]}\`.\n\nTransaction hash:\n\`\`\`\n${rpc.blockExplorerUrl}/tx/${txHash}\n\`\`\``,
-						// 			apiToken: env.TELEGRAM_API_TOKEN,
-						// 		});
-						// 	} catch (error) {
-						// 		console.error(error);
-						// 		// Likely RPC error
-						// 	}
-						// }
 						break;
+					case '/help':
+						const helpText = `These are the following commands and examples:\n\n/start - Sets superadmin (only once)\n\n\n/rpc - Retrieves current RPC settings\n/rpc set - (Admin Only) Sets RPC values & Private key\n\`\`\`\n/rpc set 1 chainName http://example.com $abcd 1000 http://example.com 0x1234567890abcdef\n\`\`\`\n\n/admin check @username - (Admin Only) Checks if user is an admin\n/admin add @username - (Admin Only) Adds an admin to send tokens\n/admin remove @username - (Admin Only) Removes an admin\n\n/status - Checks faucet status for native gas token\n/status $token - Checks faucet status for erc20 token\n\n/send 0xAddress amount $token - (Admin Only) Sends native or erc20 tokens to an address\n\`\`\`\n/send 0x1234567890abcdef 100 $abcd\n\`\`\`\n\n/tokens - (Admin Only) Lists all tokens\n/tokens add $token 0xAddress - (Admin Only) Adds erc20 token to whitelist\n/tokens remove $token - (Admin Only) Removes erc20 token from whitelist`;
+
+						await telegramSendMessage({
+							endpoint: '/sendMessage?parse_mode=markdown',
+							chatId,
+							text: `${helpText}`,
+							apiToken: env.TELEGRAM_API_TOKEN,
+						});
 					default:
 					// Nothing
 				}

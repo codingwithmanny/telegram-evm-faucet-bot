@@ -128,15 +128,7 @@ const telegramSendMessage = async ({
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		const body = await request.text();
-		const json: { [key: string]: any } = JSON.parse(body);
-
-		console.log({ json });
-		console.log({
-			QSTASH_CURRENT_SIGNING_KEY: env.QSTASH_CURRENT_SIGNING_KEY,
-			QSTASH_NEXT_SIGNING_KEY: env.QSTASH_NEXT_SIGNING_KEY,
-			UPSTASH_REDIS_REST_URL: env.UPSTASH_REDIS_REST_URL,
-			UPSTASH_REDIS_REST_TOKEN: env.UPSTASH_REDIS_REST_TOKEN,
-		});
+		const json: { [key: string]: any } = body ? JSON.parse(body) : {};
 
 		// Signature validation
 		const receiver = new Receiver({
@@ -173,7 +165,7 @@ export default {
 		const isValidToken = VALIDATION?.token.test(json.token);
 		const isValidAmount = VALIDATION?.number.test(json.amount);
 		const isValidChatId = VALIDATION?.number.test(json.chatId);
-
+		
 		if (
 			rpc &&
 			typeof rpc === 'object' &&
