@@ -204,7 +204,7 @@ export default {
 					const txHash = await walletClient.sendTransaction({
 						account: privateKeyToAccount(rpc.privateKey as `0x${string}`),
 						to: `${json.address}` as `0x${string}`,
-						value: BigInt(parseInt(json.amount, 0) * 1000000000000000000),
+						value: BigInt(parseInt(json.amount, 0) * (10 ** parseInt(rpc.decimals, 0))),
 					});
 					await publicClient.waitForTransactionReceipt({ hash: txHash });
 					await telegramSendMessage({
@@ -215,7 +215,8 @@ export default {
 					});
 				} else {
 					const existingTokens: { [key: string]: any } = (await redis.get('tokens')) || {};
-					const tokenAddress = existingTokens?.[json.token.toLowerCase()];
+          const token = existingTokens?.[json.token.toLowerCase()];
+					const tokenAddress = token.address;
 
 					if (existingTokens && tokenAddress) {
 						const txHash = await walletClient.writeContract({
@@ -223,7 +224,7 @@ export default {
 							address: `${tokenAddress}` as `0x${string}`,
 							abi: erc20Abi,
 							functionName: 'transfer',
-							args: [`${json.address}` as `0x${string}`, BigInt(parseInt(json.amount, 0) * 1000000000000000000)],
+							args: [`${json.address}` as `0x${string}`, BigInt(parseInt(json.amount, 0) * (10 ** parseInt(token.decimals, 0)))],
 						});
 						await publicClient.waitForTransactionReceipt({ hash: txHash });
 						await telegramSendMessage({
