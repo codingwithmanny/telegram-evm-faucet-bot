@@ -336,7 +336,15 @@ export default {
               const existingTokens: { [key: string]: any } = (await redis.get('tokens')) || {};
               const token = existingTokens?.[params[0].toLowerCase()];
               const tokenAddress = token?.address;
-              if (!isValidToken || !tokenAddress) break;
+              if (!isValidToken || !tokenAddress) {
+								await telegramSendMessage({
+									endpoint: '/sendMessage?parse_mode=markdown',
+									chatId,
+									text: `Invalid token or not found \`${params[0].toUpperCase()}\`.`,
+									apiToken: env.TELEGRAM_API_TOKEN,
+								});
+								break;
+							};
 
               try {
                 const publicClient = createPublicClient({ chain, transport: http() });
@@ -384,7 +392,7 @@ export default {
             if (params[0] === 'add' && isAdmin && hasSuperAdminAndRpc) {
               // Validation
               const isNotNativeToken = params[0] !== rpc.token;
-              const isValidToken = params.length === 3 && VALIDATION?.token.test(params[1]) && VALIDATION?.address.test(params[2]);
+              const isValidToken = params.length === 4 && VALIDATION?.token.test(params[1]) && VALIDATION?.address.test(params[2]);
               if (!isNotNativeToken || !isValidToken) break;
 
               const existingTokens = (await redis.get('tokens')) || {};
@@ -426,7 +434,7 @@ export default {
                 }, ...(await redis.get('tokens')) || {}
               };
               const tokenValues = Object.entries(tokens).map(
-                ([key, value], index) => `${index !== 0 ? '\n\n' : ''}${key.toUpperCase()}:\n${value?.address}\n${value?.decimals}\n`,
+                ([key, value], index) => `${index !== 0 ? '\n\n' : ''}${key.toUpperCase()}:\n${value?.address}\n${value?.decimals}`,
               );
 
               await telegramSendMessage({
@@ -498,7 +506,7 @@ export default {
               + `/send 0xAddress amount $token - (Admin Only) Sends native or erc20 tokens to an address\n\`\`\`\n`
               + `/send 0x1234567890abcdef 100 $abcd\n\`\`\`\n\n`
               + `/tokens - (Admin Only) Lists all tokens\n`
-              + `/tokens add $token 0xAddress 18 - (Admin Only) Adds erc20 token to whitelist {$token} {0xAddress} {decimals}\n`
+              + `/tokens add $token 0xAddress 18 - (Admin Only) Adds erc20 token to whitelist <$token> <0xAddress> <decimals>\n`
               + `/tokens remove $token - (Admin Only) Removes erc20 token from whitelist`;
 
             await telegramSendMessage({
