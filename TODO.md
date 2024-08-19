@@ -24,6 +24,7 @@ Bot
 - [x] Send
   - [x] Send x token to user
   - [x] Add to queue
+  - [ ] Adjust for other decimals
 
 Queue
 
