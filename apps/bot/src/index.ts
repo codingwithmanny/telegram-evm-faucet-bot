@@ -74,7 +74,7 @@ const MESSAGES = {
 const VALIDATION = {
   url: /^(http|https):\/\/[^ "]+$/, // url
   username: /^@[a-zA-Z0-9_]{3,}$/,
-  token: /^(\$[a-zA-Z]{4,5})/, // starts with '$' and is followed by 4-5 letters
+  token: /^(\$[a-zA-Z]{3,})/, // starts with '$' and is followed by 3+ letters
   number: /^[1-9]\d*$/, // an integer number that is greater than 0
   address: /^0x[a-fA-F0-9]{40}$/, // evm wallet/token address
   textOnly: /^[^0-9][a-zA-Z]/,
@@ -392,7 +392,7 @@ export default {
             if (params[0] === 'add' && isAdmin && hasSuperAdminAndRpc) {
               // Validation
               const isNotNativeToken = params[0] !== rpc.token;
-              const isValidToken = params.length === 4 && VALIDATION?.token.test(params[1]) && VALIDATION?.address.test(params[2]);
+              const isValidToken = VALIDATION?.token.test(params[1]) && VALIDATION?.address.test(params[2]);
               if (!isNotNativeToken || !isValidToken) break;
 
               const existingTokens = (await redis.get('tokens')) || {};
