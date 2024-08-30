@@ -40,7 +40,7 @@ const TELEGRAM_API_URL = 'https://api.telegram.org/bot';
  */
 const VALIDATION = {
 	token: /^(\$[a-zA-Z]{3,})/, // starts with '$' and is followed by 3+ letters
-	number: /^[1-9]\d*$/, // an integer number that is greater than 0
+	number: /^(0(\.0*[1-9]\d{0,17})?|[1-9]\d*(\.\d{1,18})?)$/, // a number that is greater than 0
 	address: /^0x[a-fA-F0-9]{40}$/, // evm wallet/token address
 };
 
