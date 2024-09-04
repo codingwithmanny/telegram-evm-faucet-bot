@@ -39,7 +39,7 @@ const TELEGRAM_API_URL = 'https://api.telegram.org/bot';
  * @dev Regex validation patterns
  */
 const VALIDATION = {
-	token: /^(\$[a-zA-Z]{3,})/, // starts with '$' and is followed by 3+ letters
+	token: /^(\$[a-zA-Z]{1,})/, // starts with '$' and is followed by 1+ letters
 	number: /^(0(\.0*[1-9]\d{0,17})?|[1-9]\d*(\.\d{1,18})?)$/, // a number that is greater than 0
 	address: /^0x[a-fA-F0-9]{40}$/, // evm wallet/token address
 };
