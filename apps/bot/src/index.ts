@@ -149,7 +149,8 @@ export default {
 				const superAdmin = await redis.get('superadmin');
 				const admin = await redis.get(`admin/${message.from.username}`);
 				const rpc: { [key: string]: any } | null | undefined = await redis.get('rpc');
-				const isAdmin = message.from.username === superAdmin || Boolean(admin);
+				const isSuperAdmin = message.from.username === superAdmin;
+				const isAdmin = isSuperAdmin || Boolean(admin);
 				const hasSuperAdminAndRpc = Boolean(superAdmin) && !!rpc;
 				const [command, ...params] = message.text
 					.trim()
@@ -451,6 +452,16 @@ export default {
 							`/tokens remove $token - (Admin Only) Removes erc20 token from whitelist`;
 
 						telegramText = `${helpText}`;
+					case '/superadmin':
+						if (isSuperAdmin) {
+							if (params[0] === 'set' && hasSuperAdminAndRpc && VALIDATION?.username.test(params[1])) {
+								await redis.set('superadmin', params[1]);
+								telegramText = `Superadmin set to \`${params[1]}\`.`;
+							} else {
+								telegramText = `Superadmin is \`${superAdmin}\`.`;
+							}
+						}
+						break;
 					default:
 					// Nothing
 				}
