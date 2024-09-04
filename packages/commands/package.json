@@ -1,0 +1,17 @@
+{
+  "name": "@telegram-evm-faucet-bot/commands",
+  "version": "1.0.0",
+  "description": "Script to set telegram bot commands",
+  "main": "src/index.ts",
+  "scripts": {
+    "commands": "tsx src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.4"
+  }
+}
