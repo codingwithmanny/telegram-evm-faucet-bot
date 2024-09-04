@@ -17,3 +17,9 @@ curl --location --request GET 'https://api.telegram.org/bot<YOUR_TELEGRAM_API_TO
     "url": "<YOUR_CLOUDFLARE_WORKER_BOT_URL>"
 }'
 ```
+
+Set env
+
+```bash
+pnpm dlx wrangler secret put UPSTASH_QSTASH_TOKEN
+```
