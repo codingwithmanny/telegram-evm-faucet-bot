@@ -146,13 +146,11 @@ export default {
 				return false;
 			});
 
+		// Telegram message to send to handler
+		let telegramText = '';
+
 		if (!isValid) {
-			await telegramSendMessage({
-				endpoint: '/sendMessage?parse_mode=markdown',
-				chatId: json.chatId,
-				text: `Transaction Failed. Invalid signature, please check settings.\n\nFailed transaction:\n\`\`\`\nAddress:\n${json.address}\n\nAmount:\n${json.amount}\n\nToken:\n${json.token}\n\`\`\``,
-				apiToken: env.TELEGRAM_API_TOKEN,
-			});
+			telegramText = `Transaction Failed. Invalid signature, please check settings.\n\nFailed transaction:\n\`\`\`\nAddress:\n${json.address}\n\nAmount:\n${json.amount}\n\nToken:\n${json.token}\n\`\`\``;
 		}
 
 		// Perform transaction
@@ -165,8 +163,9 @@ export default {
 		const isValidToken = VALIDATION?.token.test(json.token);
 		const isValidAmount = VALIDATION?.number.test(json.amount);
 		const isValidChatId = VALIDATION?.number.test(json.chatId);
-		
+
 		if (
+			isValid &&
 			rpc &&
 			typeof rpc === 'object' &&
 			Object.keys(rpc).length === 7 &&
@@ -204,18 +203,14 @@ export default {
 					const txHash = await walletClient.sendTransaction({
 						account: privateKeyToAccount(rpc.privateKey as `0x${string}`),
 						to: `${json.address}` as `0x${string}`,
-						value: BigInt(parseInt(json.amount, 0) * (10 ** parseInt(rpc.decimals, 0))),
+						value: BigInt(parseInt(json.amount, 0) * 10 ** parseInt(rpc.decimals, 0)),
 					});
 					await publicClient.waitForTransactionReceipt({ hash: txHash });
-					await telegramSendMessage({
-						endpoint: '/sendMessage?parse_mode=markdown',
-						chatId: json.chatId,
-						text: `Sent \`${json.amount}\` \`${json.token.toUpperCase()}\` to \`${json.address}\`.\n\nTransaction hash:\n\`\`\`\n${rpc.blockExplorerUrl}/tx/${txHash}\n\`\`\``,
-						apiToken: env.TELEGRAM_API_TOKEN,
-					});
+
+					telegramText = `Sent \`${json.amount}\` \`${json.token.toUpperCase()}\` to \`${json.address}\`.\n\nTransaction hash:\n\`\`\`\n${rpc.blockExplorerUrl}/tx/${txHash}\n\`\`\``;
 				} else {
 					const existingTokens: { [key: string]: any } = (await redis.get('tokens')) || {};
-          const token = existingTokens?.[json.token.toLowerCase()];
+					const token = existingTokens?.[json.token.toLowerCase()];
 					const tokenAddress = token.address;
 
 					if (existingTokens && tokenAddress) {
@@ -224,27 +219,28 @@ export default {
 							address: `${tokenAddress}` as `0x${string}`,
 							abi: erc20Abi,
 							functionName: 'transfer',
-							args: [`${json.address}` as `0x${string}`, BigInt(parseInt(json.amount, 0) * (10 ** parseInt(token.decimals, 0)))],
+							args: [`${json.address}` as `0x${string}`, BigInt(parseInt(json.amount, 0) * 10 ** parseInt(token.decimals, 0))],
 						});
 						await publicClient.waitForTransactionReceipt({ hash: txHash });
-						await telegramSendMessage({
-							endpoint: '/sendMessage?parse_mode=markdown',
-							chatId: json.chatId,
-							text: `Sent \`${json.amount}\` \`${json.token.toUpperCase()}\` to \`${json.address}\`.\n\nTransaction hash:\n\`\`\`\n${rpc.blockExplorerUrl}/tx/${txHash}\n\`\`\``,
-							apiToken: env.TELEGRAM_API_TOKEN,
-						});
+
+						telegramText = `Sent \`${json.amount}\` \`${json.token.toUpperCase()}\` to \`${json.address}\`.\n\nTransaction hash:\n\`\`\`\n${rpc.blockExplorerUrl}/tx/${txHash}\n\`\`\``;
 					}
 				}
 			} catch (error) {
 				console.error(error);
 				// Could not parse json
-				await telegramSendMessage({
-					endpoint: '/sendMessage?parse_mode=markdown',
-					chatId: json.chatId,
-					text: `Transaction Failed. RPC Error.\n\nFailed transaction:\n\`\`\`\nAddress:\n${json.address}\n\nAmount:\n${json.amount}\n\nToken:\n${json.token}\n\`\`\``,
-					apiToken: env.TELEGRAM_API_TOKEN,
-				});
+				telegramText = `Transaction Failed. Error occurred while processing the transaction.\n\nFailed transaction:\n\`\`\`\nAddress:\n${json.address}\n\nAmount:\n${json.amount}\n\nToken:\n${json.token}\n\`\`\``;
 			}
+		}
+
+		// Telegram message handler
+		if (telegramText) {
+			await telegramSendMessage({
+				endpoint: '/sendMessage?parse_mode=markdown',
+				chatId: json.chatId,
+				text: telegramText,
+				apiToken: env.TELEGRAM_API_TOKEN,
+			});
 		}
 
 		// Default response
