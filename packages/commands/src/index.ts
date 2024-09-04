@@ -80,13 +80,14 @@ const main = async () => {
             description: "See a full list of commands and examples",
           },
           {
-            commands: "superadmin",
+            command: "superadmin",
             description: "Manage superadmin settings",
           },
         ],
         language_code: "en",
       }),
     });
+    console.log({ response: response.ok });
     if (response.ok) {
       const json = await response.json();
       console.log(json);
@@ -94,6 +95,7 @@ const main = async () => {
         status: MESSAGES.TELEGRAM.SUCCESS.OK.status,
       });
     }
+    console.error(await response.text());
     return new Response(MESSAGES.TELEGRAM.ERROR.FAILED.text, {
       status: MESSAGES.TELEGRAM.ERROR.FAILED.status,
     });
