@@ -453,8 +453,8 @@ export default {
 							`/tokens remove $token - (Admin Only) Removes erc20 token from whitelist` +
 							`/superadmin - (Superadmin Only) Returns current superadmin\n\`\`\`\n` +
 							`/superadmin set @username - (Superadmin) Transfers superadmin\n\`\`\`` +
-							`/drip set $token 5m - (Superadmin Only) Manages drip settings\n\`\`\`\n` +
-							`/drip settings - (Superadmin Only) set $token 1h\n`;
+							`/drip set $token 0.1 5m - (Superadmin Only) Manages drip settings with <$token> <decimals> <1m|4h>\n\`\`\`\n` +
+							`/drip settings - (Superadmin Only) Returns current drip settings\n`;
 
 						telegramText = `${helpText}`;
 					case '/superadmin':
@@ -473,7 +473,8 @@ export default {
 							isSuperAdmin &&
 							hasSuperAdminAndRpc &&
 							VALIDATION?.token.test(params[1]) &&
-							VALIDATION?.time.test(params[2])
+							VALIDATION?.number.test(params[2]) &&
+							VALIDATION?.time.test(params[3])
 						) {
 							const isNativeToken = params[1].toLowerCase() === rpc.token.toLowerCase();
 							const existingTokens: { [key: string]: any } = (await redis.get('tokens')) || {};
@@ -483,17 +484,22 @@ export default {
 							const existingDripSettings: { [key: string]: any } = (await redis.get(`drip`)) || {};
 							await redis.set('drip', {
 								...existingDripSettings,
-								[token]: params[2],
+								[token]: {
+									quantity: params[2],
+									interval: params[3],
+								},
 							});
 
-							telegramText = `Drip settings for \`${token}\` set to \`${params[2]}\`.`;
+							telegramText = `Drip settings for \`${token}\` set to \`${params[2]}\` every \`${params[3]}\`.`;
 						} else if (params[0] === 'settings' && isSuperAdmin && hasSuperAdminAndRpc) {
 							const existingDripSettings: { [key: string]: any } = (await redis.get(`drip`)) || {};
 							const dripValues = Object.entries(existingDripSettings).map(
-								([key, value], index) => `${index !== 0 ? '\n\n' : ''}${key.toUpperCase()}: ${value}`,
+								([key, value], index) => `${index !== 0 ? '\n\n' : ''}${key.toUpperCase()}: ${value.quantity}/${value.interval}`,
 							);
 
 							telegramText = `Drip settings are:\n\`\`\`\n${dripValues.toString().replaceAll(',', '')}\n\`\`\`\n`;
+						} else if (params[0] === 'reset' && isSuperAdmin && hasSuperAdminAndRpc) {
+							await redis.set('drip', {});
 						}
 						break;
 					default:
