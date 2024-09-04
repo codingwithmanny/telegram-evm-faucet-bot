@@ -79,6 +79,10 @@ const main = async () => {
             command: "help",
             description: "See a full list of commands and examples",
           },
+          {
+            commands: "superadmin",
+            description: "Manage superadmin settings",
+          },
         ],
         language_code: "en",
       }),
