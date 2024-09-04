@@ -184,9 +184,9 @@ export default {
 					}
 				}
 
-        // Telegram message to send to handler
+				// Telegram message to send to handler
 				let telegramText = '';
-        
+
 				// Main commands for bot
 				switch (command) {
 					/**
