@@ -83,6 +83,10 @@ const main = async () => {
             command: "superadmin",
             description: "Manage superadmin settings",
           },
+          {
+            command: "drip",
+            description: "Manage drip and drip settings",
+          },
         ],
         language_code: "en",
       }),

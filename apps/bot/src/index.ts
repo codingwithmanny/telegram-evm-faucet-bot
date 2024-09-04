@@ -78,6 +78,7 @@ const VALIDATION = {
 	number: /^(0(\.0*[1-9]\d{0,17})?|[1-9]\d*(\.\d{1,18})?)$/, // a number that is greater than 0
 	address: /^0x[a-fA-F0-9]{40}$/, // evm wallet/token address
 	textOnly: /^[^0-9][a-zA-Z]/,
+	time: /^\d+[mh]$/, // handles minutes and hours e.g. 1m, 24h
 	pk: /^(0x)?[0-9a-fA-F]{64}$/,
 };
 
@@ -449,7 +450,11 @@ export default {
 							`/send 0x1234567890abcdef 100 $abcd\n\`\`\`\n\n` +
 							`/tokens - (Admin Only) Lists all tokens\n` +
 							`/tokens add $token 0xAddress 18 - (Admin Only) Adds erc20 token to whitelist <$token> <0xAddress> <decimals>\n` +
-							`/tokens remove $token - (Admin Only) Removes erc20 token from whitelist`;
+							`/tokens remove $token - (Admin Only) Removes erc20 token from whitelist` +
+							`/superadmin - (Superadmin Only) Returns current superadmin\n\`\`\`\n` +
+							`/superadmin set @username - (Superadmin) Transfers superadmin\n\`\`\`` +
+							`/drip set $token 5m - (Superadmin Only) Manages drip settings\n\`\`\`\n` +
+							`/drip settings - (Superadmin Only) set $token 1h\n`;
 
 						telegramText = `${helpText}`;
 					case '/superadmin':
@@ -460,6 +465,35 @@ export default {
 							} else {
 								telegramText = `Superadmin is \`${superAdmin}\`.`;
 							}
+						}
+						break;
+					case '/drip':
+						if (
+							params[0] === 'set' &&
+							isSuperAdmin &&
+							hasSuperAdminAndRpc &&
+							VALIDATION?.token.test(params[1]) &&
+							VALIDATION?.time.test(params[2])
+						) {
+							const isNativeToken = params[1].toLowerCase() === rpc.token.toLowerCase();
+							const existingTokens: { [key: string]: any } = (await redis.get('tokens')) || {};
+							const token = params[1].toLowerCase();
+							if (!isNativeToken && !existingTokens?.[token]) break;
+
+							const existingDripSettings: { [key: string]: any } = (await redis.get(`drip`)) || {};
+							await redis.set('drip', {
+								...existingDripSettings,
+								[token]: params[2],
+							});
+
+							telegramText = `Drip settings for \`${token}\` set to \`${params[2]}\`.`;
+						} else if (params[0] === 'settings' && isSuperAdmin && hasSuperAdminAndRpc) {
+							const existingDripSettings: { [key: string]: any } = (await redis.get(`drip`)) || {};
+							const dripValues = Object.entries(existingDripSettings).map(
+								([key, value], index) => `${index !== 0 ? '\n\n' : ''}${key.toUpperCase()}: ${value}`,
+							);
+
+							telegramText = `Drip settings are:\n\`\`\`\n${dripValues.toString().replaceAll(',', '')}\n\`\`\`\n`;
 						}
 						break;
 					default:
