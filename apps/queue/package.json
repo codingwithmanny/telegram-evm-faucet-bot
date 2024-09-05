@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
-    "publish": "wrangler publish",
     "dev": "wrangler dev --port 8788 --inspector-port 9230",
     "start": "wrangler dev",
     "test": "vitest",
