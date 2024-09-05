@@ -2,11 +2,16 @@
   "name": "telegram-evm-faucet-bot",
   "private": true,
   "scripts": {
+    "cf:login": "wrangler login",
+    "cf:whoami": "wrangler whoami",
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "clean": "turbo clean; rm -rf .turbo; rm -rf node_modules;"
+    "clean": "turbo clean; rm -rf .turbo; rm -rf node_modules;",
+    "deploy": "turbo deploy",
+    "commands": "turbo commands",
+    "webhook": "turbo webhook"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
@@ -16,5 +21,8 @@
   "packageManager": "pnpm@8.15.6",
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "wrangler": "^3.60.3"
   }
 }

@@ -12,7 +12,7 @@ declare module 'cloudflare:test' {
 		UPSTASH_REDIS_REST_TOKEN: string;
 		CLOUDFLARE_WORKER_QUEUE_URL: string;
 		UPSTASH_QSTASH_TOKEN: string;
-		QSTASH_QUEUE: string;
+		UPSTASH_QSTASH_QUEUE: string;
 	}
 }
 

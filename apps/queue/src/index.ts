@@ -24,8 +24,8 @@ export interface Env {
 	UPSTASH_REDIS_REST_URL: string;
 	UPSTASH_REDIS_REST_TOKEN: string;
 	CLOUDFLARE_WORKER_QUEUE_URL: string;
-	QSTASH_CURRENT_SIGNING_KEY: string;
-	QSTASH_NEXT_SIGNING_KEY: string;
+	UPSTASH_QSTASH_CURRENT_SIGNING_KEY: string;
+	UPSTASH_QSTASH_NEXT_SIGNING_KEY: string;
 }
 
 // Constants
@@ -132,8 +132,8 @@ export default {
 
 		// Signature validation
 		const receiver = new Receiver({
-			currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
-			nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
+			currentSigningKey: env.UPSTASH_QSTASH_CURRENT_SIGNING_KEY,
+			nextSigningKey: env.UPSTASH_QSTASH_NEXT_SIGNING_KEY,
 		});
 
 		const isValid = await receiver

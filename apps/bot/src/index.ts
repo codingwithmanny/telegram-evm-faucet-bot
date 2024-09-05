@@ -24,7 +24,7 @@ export interface Env {
 	UPSTASH_REDIS_REST_TOKEN: string;
 	CLOUDFLARE_WORKER_QUEUE_URL: string;
 	UPSTASH_QSTASH_TOKEN: string;
-	QSTASH_QUEUE: string;
+	UPSTASH_QSTASH_QUEUE: string;
 }
 
 // Constants
@@ -405,7 +405,7 @@ export default {
 						const isValidInteger = VALIDATION?.number.test(params[1]);
 						const isValidToken = VALIDATION?.token.test(params[2].toLowerCase());
 						const token = isValidToken ? params[2].toLowerCase() : undefined;
-						const fetchURL = `https://qstash.upstash.io/v2/enqueue/${env.QSTASH_QUEUE}/${env.CLOUDFLARE_WORKER_QUEUE_URL}`;
+						const fetchURL = `https://qstash.upstash.io/v2/enqueue/${env.UPSTASH_QSTASH_QUEUE}/${env.CLOUDFLARE_WORKER_QUEUE_URL}`;
 
 						if (hasSuperAdminAndRpc && isAdmin && params.length >= 2 && isValidAddress && isValidInteger && token) {
 							if (rpc.token.toLowerCase() !== token) {
@@ -434,13 +434,16 @@ export default {
 							telegramText = `Invalid send command.\n\`\`\`bash\n# Example:\n/send 0x1234567890abcdef 100 $abcd\n\`\`\``;
 						}
 						break;
+					/**
+					 * @dev Displays set of commands and examples
+					 */
 					case '/help':
 						const helpText =
 							`These are the following commands and examples:\n\n` +
 							`/start - Sets superadmin (only once)\n\n\n` +
 							`/rpc - Retrieves current RPC settings\n` +
 							`/rpc set - (Admin Only) Sets RPC values & Private key\n\`\`\`\n` +
-							`/rpc set 1 chainName http://example.com $abcd 1000 http://example.com 0x1234567890abcdef\n\`\`\`\n\n` +
+							`/rpc set 1 chainName http://example.com $abcd 18 http://example.com 0x1234567890abcdef\n\`\`\`\n\n` +
 							`/admin check @username - (Admin Only) Checks if user is an admin\n` +
 							`/admin add @username - (Admin Only) Adds an admin to send tokens\n` +
 							`/admin remove @username - (Admin Only) Removes an admin\n\n` +
@@ -454,19 +457,24 @@ export default {
 							`/superadmin - (Superadmin Only) Returns current superadmin\n\`\`\`\n` +
 							`/superadmin set @username - (Superadmin) Transfers superadmin\n\`\`\`` +
 							`/drip set $token 0.1 5m - (Superadmin Only) Manages drip settings with <$token> <decimals> <1m|4h>\n\`\`\`\n` +
-							`/drip settings - (Superadmin Only) Returns current drip settings\n`;
+							`/drip settings - (Superadmin Only) Returns current drip settings\n` +
+							`/drip 0xAddress $token - Drips a preset token amount to an address with <0xAddress> <$token>\n`;
 
 						telegramText = `${helpText}`;
+					/**
+					 * @dev Check and manage superadmin
+					 */
 					case '/superadmin':
-						if (isSuperAdmin) {
-							if (params[0] === 'set' && hasSuperAdminAndRpc && VALIDATION?.username.test(params[1])) {
-								await redis.set('superadmin', params[1]);
-								telegramText = `Superadmin set to \`${params[1]}\`.`;
-							} else {
-								telegramText = `Superadmin is \`${superAdmin}\`.`;
-							}
+						if (params[0] === 'set' && hasSuperAdminAndRpc && isSuperAdmin && VALIDATION?.username.test(params[1])) {
+							await redis.set('superadmin', params[1]);
+							telegramText = `Superadmin set to \`${params[1]}\`.`;
+						} else if (hasSuperAdminAndRpc && isAdmin) {
+							telegramText = `Superadmin is \`${superAdmin}\`.`;
 						}
 						break;
+					/**
+					 * @dev Request faucet to drip tokens to an address
+					 */
 					case '/drip':
 						if (
 							params[0] === 'set' &&
@@ -498,8 +506,58 @@ export default {
 							);
 
 							telegramText = `Drip settings are:\n\`\`\`\n${dripValues.toString().replaceAll(',', '')}\n\`\`\`\n`;
-						} else if (params[0] === 'reset' && isSuperAdmin && hasSuperAdminAndRpc) {
-							await redis.set('drip', {});
+						} else if (hasSuperAdminAndRpc && VALIDATION?.address.test(params[0]) && VALIDATION?.token.test(params[1])) {
+							const isNativeToken = params[1].toLowerCase() === rpc.token.toLowerCase();
+							const existingTokens: { [key: string]: any } = (await redis.get('tokens')) || {};
+							const existingDripSettings: { [key: string]: any } = (await redis.get(`drip`)) || {};
+							const token = params[1].toLowerCase();
+							const tokenDripSettings = existingDripSettings?.[token];
+
+							// Validation - If token doesn't exist don't continue
+							if ((!isNativeToken && !existingTokens?.[token]) || !tokenDripSettings) {
+								telegramText = `Invalid token drip request for \`${token.toUpperCase()}\`.`;
+								break;
+							}
+
+							const dripQuantity = tokenDripSettings?.quantity ?? 0;
+							const dripInterval: string = tokenDripSettings?.interval ?? `0m`;
+
+							// Convert to minutes
+							const dripIntervalMinutes = dripInterval.endsWith('m')
+								? parseInt(dripInterval.replace('m', ''))
+								: parseInt(dripInterval.replace('h', '')) * 60;
+
+							const rateLimitUser = parseInt((await redis.get(`lastdrip/${message.from.username}/${token}`)) || '0', 0);
+							const rateLimitAddress = parseInt((await redis.get(`lastdrip/${params[0].toLowerCase()}/${token}`)) || '0', 0);
+							const rateLimit = rateLimitUser <= rateLimitAddress ? rateLimitUser : rateLimitAddress;
+							const currentTime = new Date().getTime();
+							const isRateLimitApproved = currentTime - rateLimit > dripIntervalMinutes * 60 * 1000;
+
+							if (isRateLimitApproved) {
+								const fetchURL = `https://qstash.upstash.io/v2/enqueue/${env.UPSTASH_QSTASH_QUEUE}/${env.CLOUDFLARE_WORKER_QUEUE_URL}`;
+								await fetch(fetchURL, {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json',
+										'Upstash-Retries': '0',
+										Authorization: `Bearer ${env.UPSTASH_QSTASH_TOKEN}`,
+									},
+									body: JSON.stringify({
+										chatId,
+										address: params[0],
+										amount: dripQuantity,
+										token,
+									}),
+								});
+
+								// Update last request made
+								await redis.set(`lastdrip/${message.from.username}/${token}`, currentTime);
+								await redis.set(`lastdrip/${params[0].toLowerCase()}/${token}`, currentTime);
+
+								telegramText = `Dripping...\n\`\`\`\n${dripQuantity} ${token.toUpperCase()} to ${params[0]}\n\`\`\``;
+							} else {
+								telegramText = `Rate limit reached.\n\nThe current rate limit for \`${token.toUpperCase()}\` is \`${dripQuantity}\`/\`${dripInterval}\`.`;
+							}
 						}
 						break;
 					default:

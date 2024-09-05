@@ -3,7 +3,9 @@
   "ui": "tui",
   "tasks": {
     "clean": {},
+    "deploy": {},
     "commands": {},
+    "webhook": {},
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
