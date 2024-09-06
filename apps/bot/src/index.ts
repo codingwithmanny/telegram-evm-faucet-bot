@@ -403,12 +403,12 @@ export default {
 					case '/send':
 						const isValidAddress = VALIDATION?.address.test(params[0]);
 						const isValidInteger = VALIDATION?.number.test(params[1]);
-						const isValidToken = VALIDATION?.token.test(params[2].toLowerCase());
-						const token = isValidToken ? params[2].toLowerCase() : undefined;
+						const isValidToken = VALIDATION?.token.test(params[2]?.toLowerCase());
+						const token = isValidToken ? params[2]?.toLowerCase() : undefined;
 						const fetchURL = `https://qstash.upstash.io/v2/enqueue/${env.UPSTASH_QSTASH_QUEUE}/${env.CLOUDFLARE_WORKER_QUEUE_URL}`;
 
 						if (hasSuperAdminAndRpc && isAdmin && params.length >= 2 && isValidAddress && isValidInteger && token) {
-							if (rpc.token.toLowerCase() !== token) {
+							if ((rpc?.token ?? '').toLowerCase() !== token) {
 								const existingTokens: { [key: string]: any } = (await redis.get('tokens')) || {};
 								const tokenAddress = existingTokens?.[token];
 								if (!tokenAddress || !isValidToken) break;
