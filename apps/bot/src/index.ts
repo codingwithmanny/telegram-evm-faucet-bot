@@ -438,6 +438,7 @@ export default {
 					 * @dev Displays set of commands and examples
 					 */
 					case '/help':
+						console.log('help');
 						const helpText =
 							`These are the following commands and examples:\n\n` +
 							`/start - Sets superadmin (only once)\n\n\n` +
@@ -453,10 +454,10 @@ export default {
 							`/send 0x1234567890abcdef 100 $abcd\n\`\`\`\n\n` +
 							`/tokens - (Admin Only) Lists all tokens\n` +
 							`/tokens add $token 0xAddress 18 - (Admin Only) Adds erc20 token to whitelist <$token> <0xAddress> <decimals>\n` +
-							`/tokens remove $token - (Admin Only) Removes erc20 token from whitelist` +
-							`/superadmin - (Superadmin Only) Returns current superadmin\n\`\`\`\n` +
-							`/superadmin set @username - (Superadmin) Transfers superadmin\n\`\`\`` +
-							`/drip set $token 0.1 5m - (Superadmin Only) Manages drip settings with <$token> <decimals> <1m|4h>\n\`\`\`\n` +
+							`/tokens remove $token - (Admin Only) Removes erc20 token from whitelist\n\n` +
+							`/superadmin - (Superadmin Only) Returns current superadmin\n` +
+							`/superadmin set @username - (Superadmin) Transfers superadmin\n\n` +
+							`/drip set $token 0.1 5m - (Superadmin Only) Manages drip settings with <$token> <decimals> <1m|4h>\n` +
 							`/drip settings - (Superadmin Only) Returns current drip settings\n` +
 							`/drip 0xAddress $token - Drips a preset token amount to an address with <0xAddress> <$token>\n`;
 
