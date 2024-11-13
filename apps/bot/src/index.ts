@@ -461,6 +461,7 @@ export default {
 							`/drip 0xAddress $token - Drips a preset token amount to an address with <0xAddress> <$token>\n`;
 
 						telegramText = `${helpText}`;
+						break;
 					/**
 					 * @dev Check and manage superadmin
 					 */
