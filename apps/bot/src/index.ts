@@ -101,24 +101,47 @@ const telegramSendMessage = async ({
 	params?: Record<string, any>;
 }) => {
 	try {
+		const payload = {
+			chat_id: chatId,
+			text,
+			params,
+		}
 		const url = `${TELEGRAM_API_URL}${apiToken}${endpoint}`;
 		const response = await fetch(url, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify({
-				chat_id: chatId,
-				text,
-				params,
-			}),
+			body: JSON.stringify(payload),
 		});
 		if (response.ok) {
 			return new Response(MESSAGES.TELEGRAM.SUCCESS.OK.text, { status: MESSAGES.TELEGRAM.SUCCESS.OK.status });
 		}
+		await fetch(url, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				chat_id: chatId,
+				text: 'Error sending original message.',
+				params
+			}),
+		});
 		return new Response(MESSAGES.TELEGRAM.ERROR.FAILED.text, { status: MESSAGES.TELEGRAM.ERROR.FAILED.status });
 	} catch (error) {
 		console.error(error);
+		await fetch(`${TELEGRAM_API_URL}${apiToken}${endpoint}`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				chat_id: chatId,
+				text: 'Unknown error occurred.',
+				params
+			}),
+		});
 		return new Response(MESSAGES.TELEGRAM.ERROR.UNKNOWN.text, { status: MESSAGES.TELEGRAM.ERROR.UNKNOWN.status });
 	}
 };
@@ -198,7 +221,7 @@ export default {
 					case '/start':
 						if (!superAdmin) {
 							await redis.set('superadmin', message.from.username);
-							telegramText = `Superadmin \`${message.from.username}\` has been set. Type \`/help\` to see all the commands.`;
+							telegramText = `Superadmin \`${message.from.username.replace('_', '\\_')}\` has been set. Type \`/help\` to see all the commands.`;
 						} else {
 							telegramText = `Start by runnig \`/help\` to see all the commands.`;
 						}
@@ -289,18 +312,19 @@ export default {
 					/**
 					 * @dev Manage admin
 					 */
-					case '/admin':
+					case '/admin':						
 						// Validation
 						const isValidUsername = params[1] && VALIDATION?.username.test(params[1]);
+						let result = null;
 						if (params[0] === 'add' && hasSuperAdminAndRpc && isValidUsername) {
-							await redis.set(`admin/${params[1].replace('@', '')}`, 'true');
-							telegramText = `Admin ${params[1]} has been added.`;
+							result = await redis.set(`admin/${params[1].replace('@', '')}`, 'true');
+							telegramText = `Admin ${params[1].replace('_', '\\_')} has been added.`;
 						} else if (params[0] === 'remove' && hasSuperAdminAndRpc && isValidUsername) {
-							await redis.del(`admin/${params[1].replace('@', '')}`);
-							telegramText = `Admin ${params[1]} has been removed.`;
+							result = await redis.del(`admin/${params[1].replace('@', '')}`);
+							telegramText = `Admin ${params[1].replace('_', '\\_')} has been removed.`;
 						} else if (params[0] === 'check' && superAdmin && isValidUsername) {
 							const admin = await redis.get(`admin/${params[1].replace('@', '')}`);
-							telegramText = `Admin ${params[1]} is ${admin ? 'an' : 'not an'} admin.`;
+							telegramText = `Admin ${params[1].replace('_', '\\_')} is ${admin ? 'an' : 'not an'} admin.`;
 						}
 						break;
 					/**
@@ -406,7 +430,7 @@ export default {
 						const isValidToken = VALIDATION?.token.test(params[2]?.toLowerCase());
 						const token = isValidToken ? params[2]?.toLowerCase() : undefined;
 						const fetchURL = `https://qstash.upstash.io/v2/enqueue/${env.UPSTASH_QSTASH_QUEUE}/${env.CLOUDFLARE_WORKER_QUEUE_URL}`;
-
+						
 						if (hasSuperAdminAndRpc && isAdmin && params.length >= 2 && isValidAddress && isValidInteger && token) {
 							if ((rpc?.token ?? '').toLowerCase() !== token) {
 								const existingTokens: { [key: string]: any } = (await redis.get('tokens')) || {};
@@ -438,7 +462,6 @@ export default {
 					 * @dev Displays set of commands and examples
 					 */
 					case '/help':
-						console.log('help');
 						const helpText =
 							`These are the following commands and examples:\n\n` +
 							`/start - Sets superadmin (only once)\n\n\n` +
@@ -565,6 +588,9 @@ export default {
 					default:
 					// Nothing
 				}
+				
+				console.log('SENDING MESSAGE...');
+				console.log({ telegramText });
 
 				// Telegram message handler
 				if (telegramText) {
