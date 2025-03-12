@@ -73,7 +73,7 @@ const MESSAGES = {
  */
 const VALIDATION = {
 	url: /^(http|https):\/\/[^ "]+$/, // url
-	username: /^@[a-zA-Z0-9_]{3,}$/,
+	username: /^@[a-zA-Z0-9_]{3,}[a-zA-Z0-9_]+$/,
 	token: /^(\$[a-zA-Z]{1,})/, // starts with '$' and is followed by 1+ letters
 	number: /^(0(\.0*[1-9]\d{0,17})?|[1-9]\d*(\.\d{1,18})?)$/, // a number that is greater than 0
 	address: /^0x[a-fA-F0-9]{40}$/, // evm wallet/token address
